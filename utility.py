@@ -1,5 +1,6 @@
 from xhtml2pdf import pisa  # import python module
 from xhtml2pdf.files import pisaFileObject
+import io
 # Define your data
 def convert_html_to_pdf(data, output_filename):
     css_style = """
@@ -91,13 +92,15 @@ def convert_html_to_pdf(data, output_filename):
                 </body>
             </html>
     """
-    file_path = "./PDFs/"+output_filename
-    result_file = open(file_path, "w+b")
+    bufferFile = io.BytesIO()
     pisaFileObject.getNamedFile = lambda self: self.uri
     pisa_status = pisa.CreatePDF(
-        source_html, dest=result_file  
+        source_html, dest=bufferFile  
     )  
 
-    result_file.close()  
+    if pisa_status.err:
+        raise Exception("Error while creating PDF")
 
-    return file_path
+    bufferFile.seek(0)  
+
+    return bufferFile
