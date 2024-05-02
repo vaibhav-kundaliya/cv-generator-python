@@ -1,12 +1,15 @@
-from flask import Flask, request, make_response, send_file, abort, send_from_directory,after_this_request
+from flask import Flask, request, make_response, send_from_directory, abort
 from utility import convert_html_to_pdf
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 load_dotenv()
 app = Flask(__name__)
 
+scheduler = BackgroundScheduler()
 
 @app.route("/", methods=['POST'])
 def getPDFfile():
@@ -19,20 +22,26 @@ def getPDFfile():
 
 @app.route('/download/<filename>')
 def download_file(filename):
-    @after_this_request
-    def delete_file(response):
-        try:
-            # File path to delete
-            file_path = os.path.join('PDFs', filename)
-            if os.path.exists(file_path):
-                os.remove(file_path)  # Delete the file
+    file_path = os.path.join('PDFs', filename)
+    if os.path.exists(file_path):
+        return send_from_directory('PDFs', filename)
+    return abort(400, {"message":"Requested CV is not exist"})
+
+def scheduled_task():
+    files = os.listdir("PDFs")
+    for file in files:
+        file_path = os.path.join('PDFs', file)
+        if os.path.exists(file_path) and datetime.now().timestamp() - os.path.getctime(file_path) >= float(os.getenv('CLR_STORAGE')):
+            try:
+                os.remove(file_path) 
                 print(f"Deleted file: {file_path}")
-        except Exception as e:
-            print(f"Error deleting file: {e}")
-        
-        return response  # Return the original response
-    
-    return send_from_directory('PDFs', filename)
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+
+scheduler.add_job(scheduled_task, CronTrigger.from_crontab("*/30 * * * *"))
+
+scheduler.start()
+
 
 if __name__ == "__main__":
     try:

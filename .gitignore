@@ -1,3 +1,5 @@
 venv
 PDFs
 .env
+__pycache__
+venv38
