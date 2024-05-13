@@ -20,6 +20,8 @@ def convert_html_to_pdf(data, output_filename):
             }
             @frame logo {
                 -pdf-frame-content: logo;
+                top: 5mm;
+                left: 180mm;
             }
         }
         @font-face {
@@ -70,7 +72,9 @@ def convert_html_to_pdf(data, output_filename):
 
                 <body>
                     <!-- Content for Static Frame 'header_frame' -->
-                        <img src="./logo.png" id="header_content" height=80 alt="logo" />
+                    <div id="header_content">
+                        <img src="./logo.png" id="logo" height=80 alt="logo" />
+                    </div>
 
                     <!-- Content for Static Frame 'footer_frame' -->
                     <div id="footer_content" style="
